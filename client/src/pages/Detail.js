@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from '@apollo/react-hooks';
-import { useStoreContext } from "../utils/GlobalState";
+// contextapi method import { useStoreContext } from "../utils/GlobalState";
 import { QUERY_PRODUCTS } from "../utils/queries";
 import Cart from '../components/Cart';
+import {useDispatch, useSelector} from 'react-redux';
 import spinner from '../assets/spinner.gif';
 import { idbPromise } from "../utils/helpers";
 import {
@@ -14,8 +15,10 @@ import {
 } from '../utils/actions';
 
 function Detail() {
+  const dispatch = useDispatch();
+  const state = useSelector(state => state);
 
-  const [state, dispatch] = useStoreContext();
+  // contextapi method const [state, dispatch] = useStoreContext();
 
   const { products, cart } = state;
 

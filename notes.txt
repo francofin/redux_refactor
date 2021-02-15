@@ -192,3 +192,11 @@ he useQuery Hook is meant to run when a component is first rendered, not at a la
 
 Apollo provides another Hook for this exact situation. The useLazyQueryHook can be declared like any other Hook but won't actually execute until you tell it to.
 The data variable will contain the checkout session, but only after the query is called with the getCheckout() function.
+
+We've already defined a data variable to hold the returned data from useLazyQuery. Let's add another useEffect Hook to watch for changes to data. 
+We'll use the stripePromise object to redirect to Stripe once the data variable has data in it.
+
+When the Success component loads, you'll need to read everything that's saved in the IndexedDB cart store.
+Remember, the items in IndexedDB will be the same items that the user just purchased through Stripe,
+We can then take those items and pass them to the addOrder() mutation to record the order in the database.
+
