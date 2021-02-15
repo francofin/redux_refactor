@@ -1,0 +1,159 @@
+With our refactor, we'll make it so that no component should have to worry about managing state for other components to consume or update. 
+but the important data that provides the real content for the site will be managed globally.
+Another reason is that we'll soon add more stateful data that needs to be accessible across our application
+having this centralized global state in place will make that a lot easier for us to scale our application out.a lot of our state across components relies on component-level Apollo query results. 
+meaning other components need to constantly be made aware of those results, So by taking that returned data from the query result and storing it in a global state, 
+we can effectively remove a lot of confusing data movement between components to keep them in sync.
+Redux allows developers to centralize all of the data needed to make an application run properly and set it up in a global object
+Redux is built on the following three core principles,
+
+Single source of truth: By having all of the application's data stored in one location 
+that isn't tied to any single piece of the UI, we can easily manipulate our app's UI without having to affect any of it.
+
+State is read-only: This doesn't mean state can't be updated, but rather that it cannot be directly updated.
+This makes it so that the application's state is updated in a predictable fashion
+
+State is changed through pure functions:
+This means that to make an update to state, we don't actually manipulate it. Instead, we overwrite it with a new version of it. 
+We do this by creating what's known as a reducer, which runs as a result of an action.
+The name for a global state object is often referred to as a store.Developers put it in place to decouple their state management from the UI, 
+which allows them to change UI libraries if they want or need to.
+
+Actions: These define the types of events that can be emitted to update state. State can only be updated if it's a predefined action.
+
+Reducers: The actual functionality that carries out the emitted action to update state.
+
+The end goal here is to store the data retrieved for products by Apollo in this global state.This way, we can add offline capabilities later and persist our product data!
+A reducer is a function that updates state by returning a new state object and never alters the original state object. 
+The key takeaway here is that state is intended to be immutable, 
+The key takeaway here is that we now have the original state and the updated state in two separate entities,
+The important thing for us to know is that when updating state, it's important that we do so by creating a new version of it rather than reaching out and directly altering it.
+This newState object will be the result of what comes from a function that we haven't created yet,
+Reducer() accepts 2 parameters, The current state object, so we can make our copy of it for the new state.
+The action we're performing to update state, which is broken into the following two parts as an object:
+
+type: This is the type of action we're performing, and should be one of the predefined actions we created earlier.
+
+value: This won't always have the name value, but it is a name representative of the new data we want to use with the action.
+we return a new object with a copy of the state argument using the spread ... operator and then set the products key a value of a new array with the action.products
+If it's not that action type, we make no change to state and return it as is.
+If our state was much more complex, the need for multiple reducer functions may arise,
+we are updating the state of currentCategory to a new string value instead of an array.
+ create that global state object and create functionality for it to use this reducer() function!
+What we need to do is set up a function that will know how to take in our state and update it through our reducer() function. 
+Luckily, we'll lean on another React Hook, called useReducer()!
+useProductReducer(), will be used to help initialize our global state object and then provide us with the functionality for updating that state
+The useState() Hook is great for managing simpler amounts of state, like form field values and the status of a button being clicked. 
+The useReducer() Hook is meant specifically for managing a greater level of state
+With our state decoupled, we can use it across more components and pages in our application and avoid making more HTTP calls than necessary or more importantly, prop drilling.
+Prop drilling is what happens when we manage state at a top-level component that needs to be passed through multiple child components as props. 
+When the data is passed around too much, it becomes difficult to keep track of which components are reliant on which data.
+To remedy this, creating a global state object will allow any component in our application to use and update state without having to worry about receiving that information as props.
+Create a New Context Object
+The React Context API came from a need to have more Redux-like features built right into React.
+Create a file in the utils directory called GlobalState.js.
+
+createContext will be used to instantiate a new Context object. The more meaningful term we can use here is that we're using it 
+to create the container to hold our global state data and functionality so we can provide it throughout our app!
+
+useContext is another React Hook that will allow us to use the state created from the createContext function.
+Every Context object comes with two components, a Provider and Consumer.
+The Provider is a special type of React component that we wrap our application in so it can make the state data that's passed into it as a prop available to all other components. 
+The Consumer is our means of grabbing and using the data that the Provider holds for us.
+What we'll do now is create a custom provider function that will be used to manage and update our state using the reducer we created earlier as well
+With this function, StoreProvider, we instantiate our initial global state with the useProductReducer() 
+Because that wraps it around the useReducer() Hook from React, every time we run this useProductReducer() function, we receive the following two items in return:
+state is the most up-to-date version of our global state object.
+dispatch is the method we execute to update our state. It is specifically going to look for an action object passed in as its argument, as we'll soon see.
+
+After the useProductReducer() completes and provides us with the new state and function to update state (e.g., dispatch), we then return the StoreContext's 
+<Provider> component with our state object and dispatch the function provided as data for the value prop.
+
+ the StoreProvider function isn't as much of a function as it is our own custom <Provider> component! Tt's actually set up to accept props if it needs to, and it does!
+ The value prop is good to have included, as it opens us up to pass in more data for state if we need to.
+ We don't actually need to in this app, but it makes this provider flexible. The other prop, or rather ...props, is in place to handle any other props the user may need.
+ we'll need to use props.children,as this <StoreProvider> component will wrap all of our other components, making them children of it.
+ If we didn't include {...props} in our returning <Provider> component, nothing on the page would be rendered!
+
+If we didn't include {...props} in our returning <Provider> component, nothing on the page would be rendered!
+
+The last thing we need to do is create the custom function using the useContext() 
+Hook to be used by the components that actually need the data our <StoreProvider> will be,We just created our own custom React Hook! 
+When we execute this function from within a component, we will receive the [state, dispatch] data our StoreProvider provider manages for us.
+This means that any component that has access to our StoreProvider component can use any data in our 
+global state container or update it using the dispatch function.
+
+ let's update App.js to make our global state available to all of our components.
+ Everything between those JSX tags are considered the children of <StoreProvider>; that's why it was so important that we had ...props in the definition of our StoreProvider function!
+ 
+All we have to do now is update a few components to read state data from it and dispatch updates to it.
+ we'll query our category data, store it into the global state object, and then use the category data from the global state object to use it in the UI instead.
+ we immediately call upon the useStoreContext() Hook to retrieve the current state from the global state object and the dispatch() method to update state.
+ We need to somehow take the categoryData that returns from the useQuery() Hook and use the dispatch() method to set our global state. 
+we need to use the React useEffect() Hook, 
+Remember how the useEffect() Hook works. It is a function that takes two arguments, a function to run given a certain condition, and then the condition.
+the function runs immediately on load and passes in our function to update the global state and then the data that we're dependent on, categoryData and dispatch
+useEffect() Hook is that it not only runs on component load, but also when some form of state changes in that component. 
+we save that category's _id value to the global state as well!
+This is why there are so many items in the second argument of the useEffect() Hook.
+he Hook's functionality is dependent on them to work and only runs when it detects that they've changed in value! This is known as the dependency array.
+Note the use of the filter() method that only keeps the items that don't match the provided _id property.
+The cart's style sheet uses a media query to change the position of the cart on smaller screens. The position: relative declaration will 
+return the cart to its default position in the layout instead of being fixed in the top-right corner.
+
+Without a global store, you'd need to implement extra local state management and prop passing in multiple places to get the selected products into the Cart component.
+With a global store, on the other hand, the Home and Detail components can update the global state directly. 
+The Cart component can then get the updates through the global store instead of through props.
+
+The final feature is to allow users to manually edit the quantity of shopping cart items by typing directly in the <input> elements.
+We'll store all of the product and category data from the database in IndexedDB. This way, even without an internet connection, users can still navigate the application, view items, and even add items to their shopping cart.
+If the user leaves the application and comes back later, we'll have persisted the items in their shopping cart. A user is more likely to complete their order if they don't have to add everything back into the cart!
+IndexedDB is a clean slate in the browser. We need to create the database name, make object stores to hold the different data, 
+and establish how that data can be accessed in those stores.
+Remember, IndexedDB is asynchronous and event driven. his means that if we want it to be on and listening all the time, we'll have to write a lot of what-if type functionality to handle all of the moving parts.
+Instead, we'll use one function that opens the database connection, creates the object store (if it's the first time using it on the machine)
+nd runs whatever transaction we need to have run on a successful connection.
+when we call the function, we'll open the connection to the database and then connect to the object store that we pass in as storeName.
+we'll perform a transaction, using the method and object values to help carry it out.
+
+We also wrap the whole thing in a Promise, making it a lot easier to work with IndexedDB's asynchronous nature.
+
+Remember that with IndexedDB, the .onupgradeneeded() event only runs if the browser 
+notices that the version number in the .open() method has changed since the last time, 
+or if the browser has never connected to the database before and 1 is the new version.
+
+For each of them, we provide a name of the object store and the keyPath name
+we'd like to provide the actual index value we want to use for looking up data.
+Because that index value will be the MongoDB _id property for each product or category, it makes sense to set the keyPath name to _id.
+functionality for us to make a transaction with the database.
+when the database connection opens successfully, we immediately save a reference of the database to the db variable.
+Then we open a new transaction using the .transaction() method, passing in the object store that we want to interact with and the permissions we want in this transaction.
+The storeName—one of the three stores we created for the database—will be passed in as an argument in the idbPromise() function when we call it from a component.
+Above the tx.oncomplete event listener, add the following code to check 
+which value we passed into the function as a method and perform that method on the object store:
+
+If it's put, then we run the .put() method on the object store, overwriting any data with the matching _id value from 
+the object and adding it if it can't find a match. If it's get, we'll simply get all data from that store and return it. 
+Both the put and get methods will return the data to wherever we call this idbPromise() function.
+
+If the value is delete, we'll delete that item from the object store. This option will come in 
+handy if users want to remove an item from the shopping cart while offline.
+
+n development, however, we can ensure that the IndexedDB data saving and retrieving functionality still works.
+when we save product data from the useQuery() Hook's response to the global state object with the dispatch() method, 
+we also save each file to the products object store in IndexedDB using the idbPromise() function.
+
+
+Let's set it up so that if the useQuery() Hook isn't establishing a connection to the GraphQL server, we'll use the data stored in IndexedDB instead. Update the useEffect() Hook as follows:
+If we're offline and we run the useQuery() Hook, we'll never be in a state of loading data. 
+This means that the loading response Apollo provides to indicate that we're still waiting for a response won't exist, 
+let's set it up to retrieve that category data if we lose our internet connection. Just like before with the ProductList component, we'll check if the useQuery() Hook's loading return value exists—and we'll pull from IndexedDB if it doesn't.
+we'll update the useEffect() Hook to check if we have data returning from a global state and stored in products.
+If yes, let's get the current product and save it to the local state currentProduct.
+
+If no, we don't have data in global state, let's check whether we retrieved data from the server using the useQuery() Hook. 
+If yes, save that data to global state and to the product object store in IndexedDB, 
+and we'll run the useEffect() Hook over again to make that first if statement run.
+
+If no, we don't have data in global state and we don't have a connection to the server, the loading data will be undefined. 
+We'll then go to the product object store in IndexedDB and retrieve the data from there to provide the global state object.
