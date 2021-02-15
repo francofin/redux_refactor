@@ -157,3 +157,38 @@ and we'll run the useEffect() Hook over again to make that first if statement ru
 
 If no, we don't have data in global state and we don't have a connection to the server, the loading data will be undefined. 
 We'll then go to the product object store in IndexedDB and retrieve the data from there to provide the global state object.
+
+. It will constantly check the dependency array for a change in any of the values listed in it and continue to run the useEffect()
+Hook's callback function until that data stops changing and you're good to go.
+
+In offline mode, we still want users to be able to add products and update quantities of a product in their shopping carts. So we'll have to update the Detail and ProductItem 
+We need to set up the Cart component to look for existing data in IndexedDB on load so that we can populate any saved items into the cart and allow users to continue where they left off.
+We need to persist any changes that occur within the shopping cart, like updating product quantities or removing items from the cart.
+We want to set up this component to check for items saved in the cart object store of IndexedDB every single time the component opens.
+We can use the useEffect() Hook!
+
+we're checking to see if state.cart.length is 0, then executing getCart() to retrieve the items from the cart object store and save it to the global state object.
+We dispatch the ADD_MULTIPLE_TO_CART action here because we have an array of items returning from IndexedDB, even if it's just one product saved.
+Well, it could very easily do that if we neglect to pass the state.cart.length value into useEffect()'s dependency array. T
+That's the whole point of the dependency array. We list all of the data that this useEffect() Hook is dependent on to execute.
+The Hook runs on load no matter what, but then it only runs again if any value in the dependency array has changed since the last time it ran.
+
+In the server folder, run the command npm install stripe to install the Stripe package.
+We'll need to define a new query specifically for the checkout process.
+Once you create a real Stripe account, however, you would want to replace this with an environment variable (e.g., process.env.STRIPE_KEY).
+checkout() query expects an array of product IDs.
+We'll pass this array into a new instance of an Order Mongoose model.
+The Order model will make it much easier to convert these IDs into fully populated product objects.
+This will use the line_items array to generate a Stripe checkout session.
+The ApolloServer, however, can be configured to provide a context.
+One use for context is to preserve the headers from the original request, which the Shop-Shop app already does for you.
+
+In the client folder, run the command npm install @stripe/stripe-js to install the client-side Stripe dependency.
+We'll use this stripePromise object to perform the checkout redirect. But first, we need to collect the IDs for the items being purchased.
+This productIds array is what the QUERY_CHECKOUT query would need to generate the Stripe session.
+
+we can't call useQuery(QUERY_CHECKOUT) in the click handler function
+he useQuery Hook is meant to run when a component is first rendered, not at a later point in time based on a user action like a button click.
+
+Apollo provides another Hook for this exact situation. The useLazyQueryHook can be declared like any other Hook but won't actually execute until you tell it to.
+The data variable will contain the checkout session, but only after the query is called with the getCheckout() function.
